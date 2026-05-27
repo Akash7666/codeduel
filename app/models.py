@@ -46,3 +46,42 @@ class TestCase(Base):
     is_hidden = Column(Boolean, nullable=False, default=False)
 
     problem = relationship("Problem", back_populates="test_cases")
+
+
+class Room(Base):
+    __tablename__ = "rooms"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(6), unique=True, nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="waiting")
+    problem_id = Column(Integer, ForeignKey("problems.id"), nullable=False)
+    player_a_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    player_b_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    finished_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    problem = relationship("Problem")
+    player_a = relationship("User", foreign_keys=[player_a_id])
+    player_b = relationship("User", foreign_keys=[player_b_id])
+    winner = relationship("User", foreign_keys=[winner_id])
+    submissions = relationship(
+        "Submission", back_populates="room", cascade="all, delete-orphan"
+    )
+
+
+class Submission(Base):
+    __tablename__ = "submissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    code = Column(Text, nullable=False)
+    passed = Column(Integer, nullable=False, default=0)
+    total = Column(Integer, nullable=False, default=0)
+    all_passed = Column(Boolean, nullable=False, default=False)
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    room = relationship("Room", back_populates="submissions")
+    user = relationship("User")
