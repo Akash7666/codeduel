@@ -39,6 +39,15 @@ class ConnectionManager:
             except Exception:
                 # Socket is broken/closed; remove it
                 self.disconnect(room_code, ws)
+    
+    async def broadcast_all(self, room_code: str, message: dict) -> None:
+        """Send a JSON message to every socket in a room, including the sender."""
+        conns = list(self._rooms.get(room_code, []))
+        for uid, ws in conns:
+            try:
+                await ws.send_json(message)
+            except Exception:
+                self.disconnect(room_code, ws)
                 
 
 

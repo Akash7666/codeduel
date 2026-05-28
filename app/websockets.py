@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models import Room
 from app.dependencies import get_user_from_token
 from app.connection_manager import manager
+from datetime import datetime, timezone
 
 router = APIRouter()
 
@@ -28,6 +29,29 @@ def _room_state_message(room: Room) -> dict:
             "finished_at": room.finished_at.isoformat() if room.finished_at else None,
         },
     }
+
+def _duel_started_message(room: Room) -> dict:
+    """Payload sent to both players when the duel begins."""
+    problem = room.problem
+    visible_cases = [
+        {"input": tc.input_data, "expected": tc.expected_output}
+        for tc in problem.test_cases
+        if not tc.is_hidden
+    ]
+    return {
+        "type": "duel_started",
+        "started_at": room.started_at.isoformat(),
+        "problem": {
+            "slug": problem.slug,
+            "title": problem.title,
+            "statement": problem.statement,
+            "starter_code": problem.starter_code,
+            "function_name": problem.function_name,
+            "time_limit_sec": problem.time_limit_sec,
+            "visible_test_cases": visible_cases,
+        },
+    }
+
 
 
 @router.websocket("/ws/rooms/{code}")
@@ -65,6 +89,20 @@ async def room_socket(
             websocket,
             {"type": "player_joined", "user_id": user.id, "username": user.username},
         )
+
+        # If both players are now connected and the duel hasn't started, go live.
+        connected = manager.connected_user_ids(room.code)
+        both_present = (
+            room.player_b_id is not None
+            and room.player_a_id in connected
+            and room.player_b_id in connected
+        )
+        if both_present and room.status == "waiting":
+            room.status = "live"
+            room.started_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(room)
+            await manager.broadcast_all(room.code, _duel_started_message(room))
 
         # Keep the connection open. We don't expect client->server messages yet,
         # but receive_text() will sit here and raise WebSocketDisconnect on drop.
