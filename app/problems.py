@@ -5,12 +5,11 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Problem
 from app.judging import judge_submission
+from app.schemas_rooms import SubmitCode
 
 router = APIRouter(prefix="/problems", tags=["problems"])
 
 
-class SubmitCode(BaseModel):
-    code: str
 
 
 @router.post("/{slug}/test-judge")

@@ -8,7 +8,13 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Room, Problem, User
 from app.dependencies import get_current_user
-from app.schemas_rooms import RoomOut
+from app.schemas_rooms import RoomOut, SubmitCode
+
+from datetime import datetime, timezone
+from app.connection_manager import manager
+from app.judging import judge_submission
+from app.models import Submission
+
 
 router = APIRouter(prefix="/rooms", tags=["rooms"])
 
@@ -79,3 +85,84 @@ def get_room(
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     return room
+
+def _record_result(db: Session, room: Room) -> None:
+    """Increment win/loss counts based on the room's winner."""
+    if room.winner_id is None:
+        return
+    loser_id = room.player_b_id if room.winner_id == room.player_a_id else room.player_a_id
+    winner = db.query(User).filter(User.id == room.winner_id).first()
+    loser = db.query(User).filter(User.id == loser_id).first()
+    if winner:
+        winner.wins += 1
+    if loser:
+        loser.losses += 1
+
+
+
+
+
+
+@router.post("/{code}/submit")
+async def submit_code(
+    code: str,
+    data: "SubmitCode",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    room = db.query(Room).filter(Room.code == code.upper()).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    if current_user.id not in {room.player_a_id, room.player_b_id}:
+        raise HTTPException(status_code=403, detail="Not a player in this room")
+    if room.status != "live":
+        raise HTTPException(status_code=400, detail="Duel is not live")
+
+    # Judge the code (this calls Judge0 for each test case)
+    verdict = judge_submission(data.code, room.problem)
+
+    # Record the submission with a server-side timestamp
+    submission = Submission(
+        room_id=room.id,
+        user_id=current_user.id,
+        code=data.code,
+        passed=verdict["passed"],
+        total=verdict["total"],
+        all_passed=verdict["all_passed"],
+    )
+    db.add(submission)
+    db.commit()
+
+    # Tell the opponent that this player attempted
+    await manager.broadcast(
+        room.code,
+        None,  # no sender to skip; broadcast to everyone
+        {
+            "type": "opponent_submitted",
+            "user_id": current_user.id,
+            "username": current_user.username,
+            "passed": verdict["passed"],
+            "total": verdict["total"],
+            "all_passed": verdict["all_passed"],
+        },
+    )
+
+    # First correct solution wins — guard on status to handle ties
+    if verdict["all_passed"] and room.status == "live":
+        room.status = "finished"
+        room.winner_id = current_user.id
+        room.finished_at = datetime.now(timezone.utc)
+        _record_result(db, room)
+        db.commit()
+        db.refresh(room)
+        await manager.broadcast_all(
+            room.code,
+            {
+                "type": "duel_ended",
+                "winner_id": room.winner_id,
+                "winner_username": current_user.username,
+                "finished_at": room.finished_at.isoformat(),
+            },
+        )
+
+    return verdict
