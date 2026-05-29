@@ -29,3 +29,15 @@ async function api(path, method = "GET", body = null) {
   }
   return data;
 }
+
+// Redirect to login if no token is present.
+function requireAuth() {
+  if (!getToken()) {
+    window.location.href = "/";
+  }
+}
+
+function logout() {
+  clearToken();
+  window.location.href = "/";
+}

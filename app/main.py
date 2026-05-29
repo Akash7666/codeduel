@@ -27,3 +27,7 @@ def serve_index():
 @app.get("/lobby")
 def serve_lobby():
     return FileResponse("static/lobby.html")
+
+@app.get("/duel/{code}")
+def serve_duel(code: str):
+    return FileResponse("static/duel.html")

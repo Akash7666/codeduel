@@ -1,5 +1,45 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Lobby</title>
-<link rel="stylesheet" href="/static/css/style.css"></head>
-<body><div class="card"><h1>Lobby</h1>
-<p class="tagline">You're logged in! Lobby coming in Part B.</p></div></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeDuel — Lobby</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="card wide">
+    <div class="header-row">
+      <div>
+        <div class="greeting" id="greeting">Loading…</div>
+        <div class="stats" id="stats"></div>
+      </div>
+      <button class="linklike" id="logout-btn">Log out</button>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div class="section">
+      <h2>Start a new duel</h2>
+      <button id="create-btn">Create duel</button>
+
+      <div id="created" style="display:none;" class="section">
+        <div class="share-box" id="share-link"></div>
+        <button class="secondary" id="copy-btn">Copy link</button>
+        <button id="go-to-duel" style="margin-top:0.5rem;">Go to duel room →</button>
+        <p class="muted" style="margin-top:0.5rem;">Share the link with your opponent.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Join with a code</h2>
+      <div class="row">
+        <input type="text" id="join-code" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;">
+        <button id="join-btn">Join</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/lobby.js"></script>
+</body>
+</html>
