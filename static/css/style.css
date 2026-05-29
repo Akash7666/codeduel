@@ -1,0 +1,52 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f4f5f7;
+  color: #1a1a2e;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+.tagline { color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+label { display: block; font-size: 0.85rem; margin-bottom: 0.3rem; color: #374151; }
+input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+input:focus { outline: none; border-color: #6366f1; }
+
+button {
+  width: 100%;
+  padding: 0.7rem;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+button:hover { background: #4f46e5; }
+
+.toggle { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: #6b7280; }
+.toggle a { color: #6366f1; cursor: pointer; text-decoration: none; }
+
+.error { color: #dc2626; font-size: 0.85rem; margin-bottom: 1rem; min-height: 1rem; }
