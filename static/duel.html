@@ -1,9 +1,74 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Duel</title>
-<link rel="stylesheet" href="/static/css/style.css"></head>
-<body>
-  <div class="card"><h1>Duel Room</h1>
-  <p class="tagline">Duel UI coming in Part C — the editor lives here.</p></div>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeDuel — Duel</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="duel-body">
+  <div class="duel-shell">
+    <!-- Header -->
+    <div class="duel-header">
+      <div class="room-code">Room: <span id="room-code">—</span></div>
+      <div class="timer" id="timer">0:00</div>
+      <div class="players">
+        <div class="player-pill"><span class="status-dot" id="dot-a"></span><span class="name" id="name-a">—</span></div>
+        <div class="player-pill"><span class="status-dot" id="dot-b"></span><span class="name" id="name-b">—</span></div>
+      </div>
+    </div>
+
+    <!-- Main duel layout -->
+    <div class="duel-grid">
+      <!-- Left: problem -->
+      <div class="panel problem">
+        <h2 id="problem-title">Waiting for problem…</h2>
+        <div class="statement" id="problem-statement">The problem appears here when the duel starts.</div>
+        <h3 id="examples-header" class="hidden">Examples</h3>
+        <div id="examples"></div>
+      </div>
+
+      <!-- Right: editor + submit -->
+      <div class="panel editor-panel">
+        <div class="editor-mount" id="editor">def add(a, b):
+    # your code here
+    pass
+</div>
+        <div class="editor-actions">
+          <button id="submit-btn" disabled>Submit</button>
+        </div>
+        <div class="verdict" id="verdict"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waiting overlay -->
+  <div class="overlay" id="overlay-waiting">
+    <div class="card">
+      <h2>Waiting for opponent</h2>
+      <p>Share the link to bring someone in. The duel starts the moment they join.</p>
+      <div class="share-box" id="overlay-share">—</div>
+    </div>
+  </div>
+
+  <!-- Win overlay -->
+  <div class="overlay win hidden" id="overlay-win">
+    <div class="card">
+      <h2>You won!</h2>
+      <p id="win-reason">First correct solution.</p>
+      <button onclick="window.location.href='/lobby'">Back to lobby</button>
+    </div>
+  </div>
+
+  <!-- Lose overlay -->
+  <div class="overlay lose hidden" id="overlay-lose">
+    <div class="card">
+      <h2>Opponent won</h2>
+      <p id="lose-reason">They submitted a correct solution first.</p>
+      <button onclick="window.location.href='/lobby'">Back to lobby</button>
+    </div>
+  </div>
+
   <script src="/static/js/api.js"></script>
   <script>requireAuth();</script>
 </body>
