@@ -30,10 +30,9 @@
 
       <!-- Right: editor + submit -->
       <div class="panel editor-panel">
-        <div class="editor-mount" id="editor">def add(a, b):
-    # your code here
-    pass
-</div>
+        <div class="editor-mount" id="editor"></div>
+
+
         <div class="editor-actions">
           <button id="submit-btn" disabled>Submit</button>
         </div>
@@ -69,8 +68,10 @@
     </div>
   </div>
 
+  <script src="/static/js/cm-bundle.js"></script>
   <script src="/static/js/api.js"></script>
+  <script src="/static/js/editor.js"></script>
   <script src="/static/js/duel.js"></script>
-  <!-- <script>requireAuth();</script> -->
+ <script>requireAuth();</script>
 </body>
 </html>

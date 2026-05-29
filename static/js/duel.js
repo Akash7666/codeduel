@@ -1,4 +1,5 @@
 // Run auth check immediately
+
 requireAuth();
 
 // ---- State ----
@@ -31,7 +32,26 @@ async function init() {
     return;
   }
 
+  // If we're not already in this room, try to join it.
+  const isPlayerA = roomState.player_a && roomState.player_a.id === me.id;
+  const isPlayerB = roomState.player_b && roomState.player_b.id === me.id;
+  if (!isPlayerA && !isPlayerB) {
+    try {
+      roomState = await api(`/rooms/${roomCode}/join`, "POST");
+    } catch (e) {
+      alert(e.message);
+      window.location.href = "/lobby";
+      return;
+    }
+  }
+
   renderPlayers();
+  mountEditor(
+    document.getElementById("editor"),
+    roomState.starter_code || "# waiting for problem...\n"
+  );
+  renderForStatus();
+  connectSocket();
   renderForStatus();
   connectSocket();
 }
@@ -190,6 +210,8 @@ function handleMessage(msg) {
       roomState.problem = msg.problem;
       hideWaiting();
       renderProblemIfAvailable();
+      setEditorContent(msg.problem.starter_code);
+      setEditorReadOnly(false);
       startTimer();
       break;
 
@@ -202,6 +224,7 @@ function handleMessage(msg) {
       roomState.status = "finished";
       roomState.winner_id = msg.winner_id;
       stopTimer();
+      setEditorReadOnly(true);
       showFinishedOverlay(msg.reason);
       break;
   }

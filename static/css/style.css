@@ -242,3 +242,8 @@ button:disabled { background: #9ca3af; cursor: not-allowed; }
 .overlay.lose h2 { color: #dc2626; }
 
 .hidden { display: none !important; }
+
+.editor-mount { padding: 0; }
+.cm-editor { height: 100%; min-height: 320px; border-radius: 8px; }
+.cm-editor.cm-focused { outline: none; }
+.cm-scroller { font-family: monospace; font-size: 0.95rem; }
