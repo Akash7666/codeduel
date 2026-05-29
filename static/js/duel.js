@@ -204,7 +204,7 @@ function handleMessage(msg) {
       if (roomState.player_b && msg.user_id === roomState.player_b.id) setOnline("b", false);
       break;
 
-    case "duel_started":
+   case "duel_started":
       roomState.status = "live";
       roomState.started_at = msg.started_at;
       roomState.problem = msg.problem;
@@ -212,12 +212,14 @@ function handleMessage(msg) {
       renderProblemIfAvailable();
       setEditorContent(msg.problem.starter_code);
       setEditorReadOnly(false);
+      document.getElementById("submit-btn").disabled = false;
       startTimer();
       break;
 
     case "opponent_submitted":
-      // We'll surface this visually in 4C-3
-      console.log("submission event:", msg);
+      // Ignore our own echo (the broadcast goes to everyone)
+      if (msg.user_id === me.id) break;
+      showOpponentActivity(msg);
       break;
 
     case "duel_ended":
@@ -229,5 +231,69 @@ function handleMessage(msg) {
       break;
   }
 }
+
+const submitBtn = document.getElementById("submit-btn");
+const verdictEl = document.getElementById("verdict");
+
+submitBtn.onclick = async () => {
+  if (roomState.status !== "live") return;
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Running…";
+  verdictEl.className = "verdict";  // reset
+  verdictEl.classList.remove("show");
+
+  const code = getEditorContent();
+
+  try {
+    const verdict = await api(`/rooms/${roomCode}/submit`, "POST", { code });
+    showVerdict(verdict);
+  } catch (e) {
+    verdictEl.textContent = "Error: " + e.message;
+    verdictEl.className = "verdict fail show";
+  } finally {
+    // Re-enable only if the duel is still live (a win flips status to finished)
+    if (roomState.status === "live") {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit";
+    } else {
+      submitBtn.textContent = "Submit";
+    }
+  }
+};
+
+function showVerdict(verdict) {
+  if (verdict.all_passed) {
+    verdictEl.className = "verdict pass show";
+    verdictEl.textContent = `Accepted — all ${verdict.total} tests passed!`;
+  } else {
+    verdictEl.className = "verdict fail show";
+    let text = `Failed — ${verdict.passed}/${verdict.total} tests passed.`;
+    if (verdict.first_failure) {
+      const f = verdict.first_failure;
+      text += `\nFirst failing case:\nInput: ${f.input}\nExpected: ${f.expected}\nGot: ${f.actual}`;
+    }
+    verdictEl.textContent = text;
+  }
+}
+
+function showOpponentActivity(msg) {
+  // Find which pill is the opponent and append a small status line
+  const isOpponentA = roomState.player_a && msg.user_id === roomState.player_a.id;
+  const statusText = msg.all_passed
+    ? "solved it!"
+    : `tried (${msg.passed}/${msg.total})`;
+  // Lightweight: show a transient note under the timer
+  let note = document.getElementById("opponent-note");
+  if (!note) {
+    note = document.createElement("div");
+    note.id = "opponent-note";
+    note.style.cssText = "text-align:center;font-size:0.8rem;color:#6b7280;margin-top:0.3rem;";
+    document.querySelector(".duel-header").appendChild(note);
+  }
+  note.textContent = `${msg.username} ${statusText}`;
+}
+
+
 
 init();
