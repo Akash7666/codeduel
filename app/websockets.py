@@ -3,12 +3,27 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Room
+from app.models import Room, User
 from app.dependencies import get_user_from_token
 from app.connection_manager import manager
 from datetime import datetime, timezone
 
 router = APIRouter()
+
+
+
+
+def _record_result_ws(db: Session, room: Room) -> None:
+    """Increment win/loss based on the room's winner (forfeit path)."""
+    if room.winner_id is None:
+        return
+    loser_id = room.player_b_id if room.winner_id == room.player_a_id else room.player_a_id
+    winner = db.query(User).filter(User.id == room.winner_id).first()
+    loser = db.query(User).filter(User.id == loser_id).first()
+    if winner:
+        winner.wins += 1
+    if loser:
+        loser.losses += 1
 
 
 def _room_state_message(room: Room) -> dict:
@@ -115,3 +130,24 @@ async def room_socket(
             websocket,
             {"type": "player_left", "user_id": user.id, "username": user.username},
         )
+
+        # If the duel was live, the disconnecting player forfeits.
+        db.refresh(room)
+        if room.status == "live":
+            winner_id = (
+                room.player_b_id if user.id == room.player_a_id else room.player_a_id
+            )
+            room.status = "finished"
+            room.winner_id = winner_id
+            room.finished_at = datetime.now(timezone.utc)
+            _record_result_ws(db, room)
+            db.commit()
+            await manager.broadcast_all(
+                room.code,
+                {
+                    "type": "duel_ended",
+                    "winner_id": winner_id,
+                    "reason": "forfeit",
+                    "finished_at": room.finished_at.isoformat(),
+                },
+            )
