@@ -26,7 +26,7 @@ def _record_result_ws(db: Session, room: Room) -> None:
         loser.losses += 1
 
 
-def _room_state_message(room: Room) -> dict:
+def _room_state_message(room: Room, connected_user_ids: set[int]) -> dict:
     """Build the snapshot of room state sent to a newly connected player."""
     return {
         "type": "room_state",
@@ -42,6 +42,7 @@ def _room_state_message(room: Room) -> dict:
             "winner_id": room.winner_id,
             "started_at": room.started_at.isoformat() if room.started_at else None,
             "finished_at": room.finished_at.isoformat() if room.finished_at else None,
+            "connected_user_ids": list(connected_user_ids),
         },
     }
 
@@ -98,7 +99,7 @@ async def room_socket(
 
     # 5. Send room snapshot to the new joiner; notify the other side
     try:
-        await websocket.send_json(_room_state_message(room))
+        await websocket.send_json(_room_state_message(room, manager.connected_user_ids(room.code)))
         await manager.broadcast(
             room.code,
             websocket,
