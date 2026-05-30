@@ -7,6 +7,7 @@ from app.models import Room, User
 from app.dependencies import get_user_from_token
 from app.connection_manager import manager
 from datetime import datetime, timezone
+import json
 
 router = APIRouter()
 
@@ -25,6 +26,34 @@ def _record_result_ws(db: Session, room: Room) -> None:
     if loser:
         loser.losses += 1
 
+async def _handle_tab_switch(db, room: Room, user: User) -> None:
+    """Increment the tab-switch counter for this player and notify the opponent."""
+    # Only count switches during a live duel
+    db.refresh(room)
+    if room.status != "live":
+        return
+
+    if user.id == room.player_a_id:
+        room.player_a_tab_switches += 1
+        count = room.player_a_tab_switches
+    elif user.id == room.player_b_id:
+        room.player_b_tab_switches += 1
+        count = room.player_b_tab_switches
+    else:
+        return
+    db.commit()
+
+    # Tell the OTHER player (skip the switcher's own socket)
+    await manager.broadcast(
+        room.code,
+        None,  # send to everyone; the client filters out its own id
+        {
+            "type": "opponent_tab_switch",
+            "user_id": user.id,
+            "username": user.username,
+            "count": count,
+        },
+    )
 
 def _room_state_message(room: Room, connected_user_ids: set[int]) -> dict:
     """Build the snapshot of room state sent to a newly connected player."""
@@ -122,8 +151,16 @@ async def room_socket(
 
         # Keep the connection open. We don't expect client->server messages yet,
         # but receive_text() will sit here and raise WebSocketDisconnect on drop.
+       # Listen for messages from this client.
         while True:
-            await websocket.receive_text()
+            raw = await websocket.receive_text()
+            try:
+                incoming = json.loads(raw)
+            except json.JSONDecodeError:
+                continue  # ignore malformed messages
+
+            if incoming.get("type") == "tab_switch":
+                await _handle_tab_switch(db, room, user)
     except WebSocketDisconnect:
         manager.disconnect(room.code, websocket)
         await manager.broadcast(
