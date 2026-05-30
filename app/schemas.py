@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, ConfigDict
+from typing import Literal
 
 
 class UserCreate(BaseModel):
@@ -27,3 +28,9 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+
+
+class CreateRoomRequest(BaseModel):
+    difficulty: Literal["easy", "medium", "hard"] = "easy"

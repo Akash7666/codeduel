@@ -61,6 +61,9 @@ class Room(Base):
     started_at = Column(DateTime(timezone=True), nullable=True)
     finished_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    @property
+    def difficulty(self):
+        return self.problem.difficulty if self.problem else None
 
     problem = relationship("Problem")
     player_a = relationship("User", foreign_keys=[player_a_id])

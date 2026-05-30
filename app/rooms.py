@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Room, Problem, User
 from app.dependencies import get_current_user
+from app.schemas import CreateRoomRequest
 from app.schemas_rooms import RoomOut, SubmitCode
 
 from datetime import datetime, timezone
@@ -27,15 +28,23 @@ def _generate_code() -> str:
 
 @router.post("/", response_model=RoomOut, status_code=status.HTTP_201_CREATED)
 def create_room(
+    data: CreateRoomRequest = CreateRoomRequest(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Pick a random problem
-    problem = db.query(Problem).order_by(func.random()).first()
+    # Pick a random problem of the requested difficulty
+    problem = (
+        db.query(Problem)
+        .filter(Problem.difficulty == data.difficulty)
+        .order_by(func.random())
+        .first()
+    )
     if not problem:
-        raise HTTPException(status_code=500, detail="No problems available")
+        raise HTTPException(
+            status_code=400,
+            detail=f"No problems available for difficulty '{data.difficulty}'",
+        )
 
-    # Try up to 10 unique codes — collisions are astronomically rare
     for _ in range(10):
         room = Room(
             code=_generate_code(),

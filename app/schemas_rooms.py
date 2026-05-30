@@ -20,6 +20,7 @@ class RoomOut(BaseModel):
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     created_at: datetime
+    difficulty: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
