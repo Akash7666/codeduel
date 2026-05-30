@@ -30,11 +30,11 @@ def seed():
         )
 
         problem.test_cases = [
-            TestCase(input_data="3 5", expected_output="8", is_hidden=False),
-            TestCase(input_data="0 0", expected_output="0", is_hidden=False),
-            TestCase(input_data="-4 10", expected_output="6", is_hidden=True),
-            TestCase(input_data="100 -250", expected_output="-150", is_hidden=True),
-            TestCase(input_data="-7 -8", expected_output="-15", is_hidden=True),
+            TestCase(input_data="[3, 5]", expected_output="8", is_hidden=False),
+            TestCase(input_data="[0, 0]", expected_output="0", is_hidden=False),
+            TestCase(input_data="[-4, 10]", expected_output="6", is_hidden=True),
+            TestCase(input_data="[100, -250]", expected_output="-150", is_hidden=True),
+            TestCase(input_data="[-7, -8]", expected_output="-15", is_hidden=True),
         ]
 
         db.add(problem)
