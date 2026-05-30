@@ -6,6 +6,20 @@ function clearError() { errorEl.textContent = ""; }
 
 let currentRoomCode = null;
 
+document.getElementById("create-btn").onclick = async () => {
+  clearError();
+  const difficulty = document.getElementById("difficulty-select").value;
+  try {
+    const room = await api("/rooms/", "POST", { difficulty });
+    currentRoomCode = room.code;
+    const link = `${window.location.origin}/duel/${room.code}`;
+    document.getElementById("share-link").textContent = link;
+    document.getElementById("created").style.display = "block";
+  } catch (e) {
+    showError(e.message);
+  }
+};
+
 // Load the user's info into the header
 async function loadMe() {
   try {
@@ -23,7 +37,7 @@ async function loadMe() {
 document.getElementById("create-btn").onclick = async () => {
   clearError();
   try {
-    const room = await api("/rooms/", "POST");
+    const room = await api("/rooms/", "POST", { difficulty: document.getElementById("difficulty-select").value });
     currentRoomCode = room.code;
     const link = `${window.location.origin}/duel/${room.code}`;
     document.getElementById("share-link").textContent = link;

@@ -15,6 +15,7 @@ const $ = (id) => document.getElementById(id);
 // ---- Page bootstrap ----
 async function init() {
   $("room-code").textContent = roomCode;
+// difficulty filled once room state loads
 
   try {
     me = await api("/auth/me");
@@ -31,6 +32,8 @@ async function init() {
     window.location.href = "/lobby";
     return;
   }
+
+  $("room-diff").textContent = roomState.difficulty || "—";
 
   // If we're not already in this room, try to join it.
   const isPlayerA = roomState.player_a && roomState.player_a.id === me.id;

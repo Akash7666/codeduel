@@ -19,8 +19,16 @@
     <div class="error" id="error"></div>
 
     <div class="section">
+     <div class="section">
       <h2>Start a new duel</h2>
-      <button id="create-btn">Create duel</button>
+      <div class="row">
+        <select id="difficulty-select">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button id="create-btn">Create duel</button>
+      </div>
 
       <div id="created" style="display:none;" class="section">
         <div class="share-box" id="share-link"></div>

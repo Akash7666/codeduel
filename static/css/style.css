@@ -247,3 +247,38 @@ button:disabled { background: #9ca3af; cursor: not-allowed; }
 .cm-editor { height: 100%; min-height: 320px; border-radius: 8px; }
 .cm-editor.cm-focused { outline: none; }
 .cm-scroller { font-family: monospace; font-size: 0.95rem; }
+
+
+.difficulty-picker {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+.diff-btn {
+  flex: 1;
+  width: auto;
+  padding: 0.5rem;
+  background: #fff;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.diff-btn:hover { background: #f4f5f7; }
+.diff-btn.active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+.diff-btn.active:hover { background: #4f46e5; }
+
+select {
+  padding: 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fff;
+  color: #1a1a2e;
+  cursor: pointer;
+}
+select:focus { outline: none; border-color: #6366f1; }
