@@ -69,6 +69,8 @@ class Room(Base):
     player_a = relationship("User", foreign_keys=[player_a_id])
     player_b = relationship("User", foreign_keys=[player_b_id])
     winner = relationship("User", foreign_keys=[winner_id])
+    player_a_tab_switches = Column(Integer, nullable=False, default=0)
+    player_b_tab_switches = Column(Integer, nullable=False, default=0)
     submissions = relationship(
         "Submission", back_populates="room", cascade="all, delete-orphan"
     )
