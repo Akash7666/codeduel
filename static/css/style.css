@@ -307,3 +307,23 @@ select:focus { outline: none; border-color: #6366f1; }
   color: #dc2626;
   font-weight: 600;
 }
+
+/* Slow blink while a player is live */
+@keyframes dot-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+  .status-dot.online {
+  background: #10b981;
+  animation: dot-blink 1.6s ease-in-out infinite;
+  animation-delay: calc(-1.6s);
+}
+
+
+/* Duel over — solid red, no blink */
+.status-dot.finished {
+  background: #dc2626;
+  animation: none;
+  opacity: 1;
+}

@@ -85,6 +85,14 @@ function setMeOnline(online) {
   document.getElementById("dot-me").classList.toggle("online", online);
 }
 
+function setDotsFinished() {
+  ["dot-me", "dot-opp"].forEach((id) => {
+    const dot = document.getElementById(id);
+    dot.classList.remove("online");   // stop blinking
+    dot.classList.add("finished");    // solid red
+  });
+}
+
 
 function renderForStatus() {
   if (roomState.status === "waiting") {
@@ -95,6 +103,7 @@ function renderForStatus() {
     startTimer();
   } else if (roomState.status === "finished") {
     hideWaiting();
+    setDotsFinished();
     showFinishedOverlay();
   }
 }
@@ -253,6 +262,8 @@ function handleMessage(msg) {
       roomState.winner_id = msg.winner_id;
       stopTimer();
       setEditorReadOnly(true);
+      setDotsFinished();
+      document.getElementById("submit-btn").disabled = true;
       showFinishedOverlay(msg.reason);
       break;
   }
