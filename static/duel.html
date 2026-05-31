@@ -12,10 +12,18 @@
     <div class="duel-header">
       <div class="room-code">Room: <span id="room-code">—</span> · <span id="room-diff">—</span></div>
       <div class="timer" id="timer">0:00</div>
-      <div class="players">
-        <div class="player-pill">
-          <span class="status-dot" id="opp-dot"></span>
-          <span class="name" id="opp-name">Waiting…</span>
+      <div class="players-panel">
+        <div class="player-row" id="player-row-me">
+          <span class="status-dot" id="dot-me"></span>
+          <span class="name" id="name-me">—</span>
+          <span class="role-tag">(you)</span>
+          <span class="tab-count" id="tabs-me"></span>
+        </div>
+        <div class="player-row" id="player-row-opp">
+          <span class="status-dot" id="dot-opp"></span>
+          <span class="name" id="name-opp">Waiting…</span>
+          <span class="role-tag">(opponent)</span>
+          <span class="tab-count" id="tabs-opp"></span>
         </div>
       </div>
     </div>

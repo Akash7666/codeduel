@@ -282,3 +282,28 @@ select {
   cursor: pointer;
 }
 select:focus { outline: none; border-color: #6366f1; }
+
+
+.players-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: #f4f5f7;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  min-width: 200px;
+}
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+.player-row .name { font-weight: 600; }
+.player-row .role-tag { color: #9ca3af; font-size: 0.75rem; }
+.player-row .tab-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #dc2626;
+  font-weight: 600;
+}

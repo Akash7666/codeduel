@@ -61,12 +61,16 @@ async function init() {
 
 // ---- Rendering ----
 function renderPlayers() {
+  // "Me" row
+  document.getElementById("name-me").textContent = me.username;
+
+  // "Opponent" row
   const opp = getOpponent();
-  document.getElementById("opp-name").textContent = opp ? opp.username : "Waiting…";
+  document.getElementById("name-opp").textContent = opp ? opp.username : "Waiting…";
 }
 
+
 function getOpponent() {
-  // The player who isn't "me"
   if (!roomState) return null;
   if (roomState.player_a && roomState.player_a.id !== me.id) return roomState.player_a;
   if (roomState.player_b && roomState.player_b.id !== me.id) return roomState.player_b;
@@ -74,13 +78,13 @@ function getOpponent() {
 }
 
 function setOpponentOnline(online) {
-  document.getElementById("opp-dot").classList.toggle("online", online);
+  document.getElementById("dot-opp").classList.toggle("online", online);
 }
 
-function setOnline(playerSide, online) {
-  const dot = playerSide === "a" ? $("dot-a") : $("dot-b");
-  dot.classList.toggle("online", online);
+function setMeOnline(online) {
+  document.getElementById("dot-me").classList.toggle("online", online);
 }
+
 
 function renderForStatus() {
   if (roomState.status === "waiting") {
@@ -175,7 +179,7 @@ function connectSocket() {
   socket = new WebSocket(url);
 
   socket.onopen = () => {
-    
+    setMeOnline(true);
   };
 
   socket.onmessage = (e) => handleMessage(JSON.parse(e.data));
@@ -189,18 +193,20 @@ function connectSocket() {
 
 function handleMessage(msg) {
   switch (msg.type) {
-    case "room_state": {
+   case "room_state": {
       Object.assign(roomState, msg.room);
       renderPlayers();
       const connected = new Set(msg.room.connected_user_ids || []);
+      setMeOnline(connected.has(me.id));
       const opp = getOpponent();
       setOpponentOnline(opp ? connected.has(opp.id) : false);
       break;
     }
 
     case "player_joined":
-      if (msg.user_id !== me.id) {
-        // The opponent joined — patch them into state if missing
+      if (msg.user_id === me.id) {
+        setMeOnline(true);
+      } else {
         if (roomState.player_a && roomState.player_a.id !== me.id) {
           roomState.player_a = { id: msg.user_id, username: msg.username };
         } else if (!roomState.player_b || roomState.player_b.id !== me.id) {
@@ -212,9 +218,8 @@ function handleMessage(msg) {
       break;
 
     case "player_left":
-      if (msg.user_id !== me.id) {
-        setOpponentOnline(false);
-      }
+      if (msg.user_id === me.id) setMeOnline(false);
+      else setOpponentOnline(false);
       break;
 
    case "duel_started":
@@ -316,15 +321,8 @@ function showOpponentActivity(msg) {
 }
 
 function showTabSwitchWarning(msg) {
-  let warn = document.getElementById("tab-switch-warning");
-  if (!warn) {
-    warn = document.createElement("div");
-    warn.id = "tab-switch-warning";
-    warn.style.cssText =
-      "text-align:center;font-size:0.8rem;color:#dc2626;font-weight:600;margin-top:0.3rem;";
-    document.querySelector(".duel-header").appendChild(warn);
-  }
-  warn.textContent = `⚠ ${msg.username} switched away (${msg.count}×)`;
+  // Opponent switched — show count in their row
+  document.getElementById("tabs-opp").textContent = `⚠ ${msg.count}×`;
 }
 
 
