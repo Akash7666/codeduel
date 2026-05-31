@@ -61,8 +61,20 @@ async function init() {
 
 // ---- Rendering ----
 function renderPlayers() {
-  $("name-a").textContent = roomState.player_a ? roomState.player_a.username : "—";
-  $("name-b").textContent = roomState.player_b ? roomState.player_b.username : "—";
+  const opp = getOpponent();
+  document.getElementById("opp-name").textContent = opp ? opp.username : "Waiting…";
+}
+
+function getOpponent() {
+  // The player who isn't "me"
+  if (!roomState) return null;
+  if (roomState.player_a && roomState.player_a.id !== me.id) return roomState.player_a;
+  if (roomState.player_b && roomState.player_b.id !== me.id) return roomState.player_b;
+  return null;
+}
+
+function setOpponentOnline(online) {
+  document.getElementById("opp-dot").classList.toggle("online", online);
 }
 
 function setOnline(playerSide, online) {
@@ -163,8 +175,7 @@ function connectSocket() {
   socket = new WebSocket(url);
 
   socket.onopen = () => {
-    if (roomState.player_a && me.id === roomState.player_a.id) setOnline("a", true);
-    if (roomState.player_b && me.id === roomState.player_b.id) setOnline("b", true);
+    
   };
 
   socket.onmessage = (e) => handleMessage(JSON.parse(e.data));
@@ -182,29 +193,28 @@ function handleMessage(msg) {
       Object.assign(roomState, msg.room);
       renderPlayers();
       const connected = new Set(msg.room.connected_user_ids || []);
-      if (roomState.player_a) setOnline("a", connected.has(roomState.player_a.id));
-      if (roomState.player_b) setOnline("b", connected.has(roomState.player_b.id));
+      const opp = getOpponent();
+      setOpponentOnline(opp ? connected.has(opp.id) : false);
       break;
     }
 
     case "player_joined":
-      // If we didn't know this player yet, fill them in as player_b.
-      if (roomState.player_a && msg.user_id === roomState.player_a.id) {
-        setOnline("a", true);
-      } else {
-        if (!roomState.player_b || roomState.player_b.id !== msg.user_id) {
+      if (msg.user_id !== me.id) {
+        // The opponent joined — patch them into state if missing
+        if (roomState.player_a && roomState.player_a.id !== me.id) {
+          roomState.player_a = { id: msg.user_id, username: msg.username };
+        } else if (!roomState.player_b || roomState.player_b.id !== me.id) {
           roomState.player_b = { id: msg.user_id, username: msg.username };
-          // Also update the underlying id field if your state uses it
-          roomState.player_b_id = msg.user_id;
         }
         renderPlayers();
-        setOnline("b", true);
+        setOpponentOnline(true);
       }
       break;
 
     case "player_left":
-      if (roomState.player_a && msg.user_id === roomState.player_a.id) setOnline("a", false);
-      if (roomState.player_b && msg.user_id === roomState.player_b.id) setOnline("b", false);
+      if (msg.user_id !== me.id) {
+        setOpponentOnline(false);
+      }
       break;
 
    case "duel_started":
