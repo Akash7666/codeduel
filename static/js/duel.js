@@ -224,6 +224,14 @@ function handleMessage(msg) {
       if (msg.user_id === me.id) break;
       showOpponentActivity(msg);
       break;
+    
+    case "opponent_tab_switch":
+      if (msg.user_id === me.id) break;  // ignore our own echo
+      showTabSwitchWarning(msg);
+      break;
+
+
+      
 
     case "duel_ended":
       roomState.status = "finished";
@@ -297,6 +305,28 @@ function showOpponentActivity(msg) {
   note.textContent = `${msg.username} ${statusText}`;
 }
 
+function showTabSwitchWarning(msg) {
+  let warn = document.getElementById("tab-switch-warning");
+  if (!warn) {
+    warn = document.createElement("div");
+    warn.id = "tab-switch-warning";
+    warn.style.cssText =
+      "text-align:center;font-size:0.8rem;color:#dc2626;font-weight:600;margin-top:0.3rem;";
+    document.querySelector(".duel-header").appendChild(warn);
+  }
+  warn.textContent = `⚠ ${msg.username} switched away (${msg.count}×)`;
+}
+
+
+// Report when this player switches away from the duel tab.
+document.addEventListener("visibilitychange", () => {
+  // Only report while a duel is actually live
+  if (document.hidden && roomState && roomState.status === "live") {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "tab_switch" }));
+    }
+  }
+});
 
 
 init();
