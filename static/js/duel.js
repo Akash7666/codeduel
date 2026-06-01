@@ -300,17 +300,52 @@ submitBtn.onclick = async () => {
 };
 
 function showVerdict(verdict) {
+  // --- Result tab (unchanged behavior) ---
   if (verdict.all_passed) {
     verdictEl.className = "verdict pass show";
     verdictEl.textContent = `Accepted — all ${verdict.total} tests passed!`;
   } else {
     verdictEl.className = "verdict fail show";
     let text = `Failed — ${verdict.passed}/${verdict.total} tests passed.`;
-    if (verdict.first_failure) {
+    if (verdict.first_failure && !verdict.first_failure.is_hidden) {
       const f = verdict.first_failure;
       text += `\nFirst failing case:\nInput: ${f.input}\nExpected: ${f.expected}\nGot: ${f.actual}`;
+    } else if (verdict.first_failure && verdict.first_failure.is_hidden) {
+      text += `\nFailed on a hidden test case.`;
     }
     verdictEl.textContent = text;
+  }
+
+  // --- Test Cases tab ---
+  renderCases(verdict.case_results || []);
+}
+
+function renderCases(cases) {
+  const list = document.getElementById("cases-list");
+  list.innerHTML = "";
+
+  const visible = cases.filter((c) => !c.is_hidden);
+  const hidden = cases.filter((c) => c.is_hidden);
+
+  visible.forEach((c) => {
+    const div = document.createElement("div");
+    div.className = "case-item " + (c.passed ? "pass" : "fail");
+    const statusText = c.passed ? "✓ Passed" : "✗ Failed";
+    let detail = "";
+    if (!c.passed) {
+      detail = `<div class="case-detail">in: ${c.input}<br>exp: ${c.expected}<br>got: ${c.actual || "—"}</div>`;
+    }
+    div.innerHTML = `<span class="case-status">Case ${c.index}: ${statusText}</span>${detail}`;
+    list.appendChild(div);
+  });
+
+  // Hidden cases summary
+  const hiddenPassed = hidden.filter((c) => c.passed).length;
+  if (hidden.length > 0) {
+    const summary = document.createElement("div");
+    summary.className = "hidden-summary";
+    summary.textContent = `Hidden cases: ${hiddenPassed}/${hidden.length} passed`;
+    list.appendChild(summary);
   }
 }
 
@@ -347,5 +382,15 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+
+// Result/Test-Cases tab switching
+document.querySelectorAll(".result-tab").forEach((tab) => {
+  tab.onclick = () => {
+    document.querySelectorAll(".result-tab").forEach((t) => t.classList.remove("active"));
+    document.querySelectorAll(".result-panel").forEach((p) => p.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+  };
+});
 
 init();

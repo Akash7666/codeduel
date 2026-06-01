@@ -5,15 +5,17 @@ import json
 def build_program(user_code: str, function_name: str) -> str:
     """Wrap the player's function with a JSON-based stdin harness.
 
-    Reads a JSON array of arguments from stdin, calls the function with them,
-    and prints the result as JSON.
+    Suppresses the user's own stdout so only the JSON return value is judged.
     """
     harness = (
         "\n\n"
-        "import sys, json\n"
+        "import sys, json, io\n"
         "def _main():\n"
         "    _args = json.loads(sys.stdin.read())\n"
+        "    _real_stdout = sys.stdout\n"
+        "    sys.stdout = io.StringIO()\n"  # swallow user prints
         f"    _result = {function_name}(*_args)\n"
+        "    sys.stdout = _real_stdout\n"   # restore for our output
         "    print(json.dumps(_result))\n"
         "_main()\n"
     )
@@ -22,26 +24,28 @@ def build_program(user_code: str, function_name: str) -> str:
 
 
 
+
+
 def judge_submission(user_code: str, problem) -> dict:
-    """Run user_code against every test case. Compares JSON-decoded values."""
+    """Run user_code against every test case. Returns per-case results too."""
     full_program = build_program(user_code, problem.function_name)
 
     total = len(problem.test_cases)
     passed = 0
     first_failure = None
+    case_results = []
 
-    for tc in problem.test_cases:
+    for idx, tc in enumerate(problem.test_cases):
         result = run_code(full_program, tc.input_data, problem.time_limit_sec)
         status = result.get("status", {}).get("description", "Unknown")
         actual_raw = (result.get("stdout") or "").strip()
 
-        # Compare decoded JSON values so formatting differences don't matter.
         match = False
         if status == "Accepted":
             try:
                 match = json.loads(actual_raw) == json.loads(tc.expected_output)
             except (json.JSONDecodeError, ValueError):
-                match = actual_raw == tc.expected_output.strip()  # fallback
+                match = actual_raw == tc.expected_output.strip()
 
         if match:
             passed += 1
@@ -54,9 +58,22 @@ def judge_submission(user_code: str, problem) -> dict:
                 "is_hidden": tc.is_hidden,
             }
 
+        # Per-case result. For hidden cases we don't expose input/output.
+        case_results.append({
+            "index": idx + 1,
+            "is_hidden": tc.is_hidden,
+            "passed": match,
+            "status": status,
+            # Only include details for visible cases
+            "input": None if tc.is_hidden else tc.input_data,
+            "expected": None if tc.is_hidden else tc.expected_output,
+            "actual": None if tc.is_hidden else actual_raw,
+        })
+
     return {
         "all_passed": passed == total,
         "passed": passed,
         "total": total,
         "first_failure": first_failure,
+        "case_results": case_results,
     }

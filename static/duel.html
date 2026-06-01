@@ -46,7 +46,19 @@
         <div class="editor-actions">
           <button id="submit-btn" disabled>Submit</button>
         </div>
-        <div class="verdict" id="verdict"></div>
+
+        <div class="results-tabs">
+          <button class="result-tab active" data-tab="verdict-tab">Result</button>
+          <button class="result-tab" data-tab="cases-tab">Test Cases</button>
+        </div>
+
+        <div id="verdict-tab" class="result-panel active">
+          <div class="verdict" id="verdict"></div>
+        </div>
+
+        <div id="cases-tab" class="result-panel">
+          <div id="cases-list"><p class="muted">Submit to see test case results.</p></div>
+        </div>
       </div>
     </div>
   </div>
