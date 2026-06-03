@@ -8,9 +8,50 @@ from app.dependencies import get_user_from_token
 from app.connection_manager import manager
 from datetime import datetime, timezone
 import json
-
+import asyncio
+from app.database import SessionLocal
 router = APIRouter()
 
+
+
+
+async def _delayed_forfeit(room_code: str, user_id: int, delay: int) -> None:
+    """After `delay` seconds, if the player hasn't reconnected, forfeit the duel."""
+    try:
+        await asyncio.sleep(delay)
+    except asyncio.CancelledError:
+        return  # player reconnected — abort the forfeit
+
+    # Player did not reconnect in time. Forfeit, using a fresh DB session.
+    db = SessionLocal()
+    try:
+        room = db.query(Room).filter(Room.code == room_code).first()
+        if not room or room.status != "live":
+            return  # duel already ended or gone — nothing to do
+
+        # Double-check they're still not connected (safety against races)
+        if user_id in manager.connected_user_ids(room_code):
+            return
+
+        winner_id = (
+            room.player_b_id if user_id == room.player_a_id else room.player_a_id
+        )
+        room.status = "finished"
+        room.winner_id = winner_id
+        room.finished_at = datetime.now(timezone.utc)
+        _record_result_ws(db, room)
+        db.commit()
+        await manager.broadcast_all(
+            room_code,
+            {
+                "type": "duel_ended",
+                "winner_id": winner_id,
+                "reason": "forfeit",
+                "finished_at": room.finished_at.isoformat(),
+            },
+        )
+    finally:
+        db.close()
 
 
 
@@ -125,6 +166,9 @@ async def room_socket(
 
     # 4. Accept and register
     await manager.connect(room.code, user.id, websocket)
+    
+    # If this user had a pending forfeit (e.g. they refreshed), cancel it — they're back.
+    manager.cancel_forfeit(room.code, user.id)
 
     # 5. Send room snapshot to the new joiner; notify the other side
     try:
@@ -167,4 +211,8 @@ async def room_socket(
             room.code,
             websocket,
             {"type": "player_left", "user_id": user.id, "username": user.username},
+        )
+        # Schedule a forfeit in 30s. If they reconnect, it gets cancelled.
+        manager.schedule_forfeit(
+            room.code, user.id, _delayed_forfeit(room.code, user.id, 10)
         )
