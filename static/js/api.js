@@ -33,6 +33,9 @@ async function api(path, method = "GET", body = null) {
 // Redirect to login if no token is present.
 function requireAuth() {
   if (!getToken()) {
+    // Remember where we were trying to go, so login can return us here
+    const here = window.location.pathname + window.location.search;
+    sessionStorage.setItem("redirect_after_login", here);
     window.location.href = "/";
   }
 }

@@ -2,6 +2,12 @@ const errorEl = document.getElementById("error");
 const loginForm = document.getElementById("login-form");
 const signupForm = document.getElementById("signup-form");
 
+function redirectAfterAuth() {
+  const dest = sessionStorage.getItem("redirect_after_login");
+  sessionStorage.removeItem("redirect_after_login");
+  window.location.href = dest || "/lobby";
+}
+
 function showError(msg) { errorEl.textContent = msg; }
 function clearError() { errorEl.textContent = ""; }
 
@@ -26,7 +32,7 @@ document.getElementById("login-btn").onclick = async () => {
   try {
     const data = await api("/auth/login", "POST", { email, password });
     saveToken(data.access_token);
-    window.location.href = "/lobby";
+    redirectAfterAuth();
   } catch (e) {
     showError(e.message);
   }
@@ -44,7 +50,7 @@ document.getElementById("signup-btn").onclick = async () => {
     // Auto-login right after signup
     const data = await api("/auth/login", "POST", { email, password });
     saveToken(data.access_token);
-    window.location.href = "/lobby";
+    redirectAfterAuth();
   } catch (e) {
     showError(e.message);
   }
