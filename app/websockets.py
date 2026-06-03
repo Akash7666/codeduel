@@ -168,24 +168,3 @@ async def room_socket(
             websocket,
             {"type": "player_left", "user_id": user.id, "username": user.username},
         )
-
-        # If the duel was live, the disconnecting player forfeits.
-        db.refresh(room)
-        if room.status == "live":
-            winner_id = (
-                room.player_b_id if user.id == room.player_a_id else room.player_a_id
-            )
-            room.status = "finished"
-            room.winner_id = winner_id
-            room.finished_at = datetime.now(timezone.utc)
-            _record_result_ws(db, room)
-            db.commit()
-            await manager.broadcast_all(
-                room.code,
-                {
-                    "type": "duel_ended",
-                    "winner_id": winner_id,
-                    "reason": "forfeit",
-                    "finished_at": room.finished_at.isoformat(),
-                },
-            )

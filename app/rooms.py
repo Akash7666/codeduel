@@ -95,6 +95,37 @@ def get_room(
         raise HTTPException(status_code=404, detail="Room not found")
     return room
 
+@router.get("/{code}/problem")
+def get_room_problem(
+    code: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    room = db.query(Room).filter(Room.code == code.upper()).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    if current_user.id not in {room.player_a_id, room.player_b_id}:
+        raise HTTPException(status_code=403, detail="Not a player in this room")
+
+    problem = room.problem
+    visible_cases = [
+        {"input": tc.input_data, "expected": tc.expected_output}
+        for tc in problem.test_cases
+        if not tc.is_hidden
+    ]
+    return {
+        "slug": problem.slug,
+        "title": problem.title,
+        "statement": problem.statement,
+        "starter_code": problem.starter_code,
+        "function_name": problem.function_name,
+        "time_limit_sec": problem.time_limit_sec,
+        "visible_test_cases": visible_cases,
+    }
+
+
+
+
 def _record_result(db: Session, room: Room) -> None:
     """Increment win/loss counts based on the room's winner."""
     if room.winner_id is None:

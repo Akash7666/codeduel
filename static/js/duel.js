@@ -99,7 +99,7 @@ function renderForStatus() {
     showWaiting();
   } else if (roomState.status === "live") {
     hideWaiting();
-    renderProblemIfAvailable();
+    loadProblemForLiveRoom();
     startTimer();
   } else if (roomState.status === "finished") {
     hideWaiting();
@@ -107,6 +107,30 @@ function renderForStatus() {
     showFinishedOverlay();
   }
 }
+
+
+async function loadProblemForLiveRoom() {
+  // Already have the problem (normal flow via duel_started) — just render it.
+  if (roomState.problem) {
+    renderProblemIfAvailable();
+    setEditorContent(roomState.problem.starter_code);
+    setEditorReadOnly(false);
+    document.getElementById("submit-btn").disabled = false;
+    return;
+  }
+  // Refresh case: fetch the problem for this room.
+  try {
+    const problem = await api(`/rooms/${roomCode}/problem`);
+    roomState.problem = problem;
+    renderProblemIfAvailable();
+    setEditorContent(problem.starter_code);
+    setEditorReadOnly(false);
+    document.getElementById("submit-btn").disabled = false;
+  } catch (e) {
+    console.error("Could not load problem on refresh:", e);
+  }
+}
+
 
 function showWaiting() {
   $("overlay-waiting").classList.remove("hidden");
@@ -142,6 +166,8 @@ function renderProblemIfAvailable() {
     });
   }
 }
+
+
 
 function showFinishedOverlay(reason) {
   if (!roomState.winner_id) return;
