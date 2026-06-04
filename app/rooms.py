@@ -23,8 +23,18 @@ CODE_ALPHABET = string.ascii_uppercase + string.digits  # A-Z, 0-9
 CODE_LENGTH = 6
 
 
+DIFFICULTY_TIME_CAPS = {
+    "easy": 10 * 60,    # 10 minutes in seconds
+    "medium": 20 * 60,  # 20 minutes
+    "hard": 45 * 60,    # 45 minutes
+}
+
 def _generate_code() -> str:
     return "".join(random.choices(CODE_ALPHABET, k=CODE_LENGTH))
+
+def time_cap_for(difficulty: str) -> int:
+    """Return the duel time cap in seconds for a difficulty."""
+    return DIFFICULTY_TIME_CAPS.get(difficulty, 10 * 60)
 
 @router.post("/", response_model=RoomOut, status_code=status.HTTP_201_CREATED)
 def create_room(
@@ -116,6 +126,7 @@ def get_room_problem(
     return {
         "slug": problem.slug,
         "title": problem.title,
+        "time_cap_sec": time_cap_for(problem.difficulty),
         "statement": problem.statement,
         "starter_code": problem.starter_code,
         "function_name": problem.function_name,

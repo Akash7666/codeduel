@@ -1,6 +1,7 @@
 """WebSocket endpoint for live duels."""
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
+from app.rooms import time_cap_for
 
 from app.database import get_db
 from app.models import Room, User
@@ -103,6 +104,7 @@ def _room_state_message(room: Room, connected_user_ids: set[int]) -> dict:
         "room": {
             "code": room.code,
             "status": room.status,
+            "time_cap_sec": time_cap_for(room.problem.difficulty),
             "problem_id": room.problem_id,
             "player_a": {"id": room.player_a.id, "username": room.player_a.username},
             "player_b": (
@@ -127,6 +129,7 @@ def _duel_started_message(room: Room) -> dict:
     return {
         "type": "duel_started",
         "started_at": room.started_at.isoformat(),
+        "time_cap_sec": time_cap_for(problem.difficulty),
         "problem": {
             "slug": problem.slug,
             "title": problem.title,
@@ -205,6 +208,10 @@ async def room_socket(
 
             if incoming.get("type") == "tab_switch":
                 await _handle_tab_switch(db, room, user)
+            elif incoming.get("type") == "code_sync":
+                code = incoming.get("code", "")
+                if isinstance(code, str):
+                    manager.set_code(room.code, user.id, code)
     except WebSocketDisconnect:
         manager.disconnect(room.code, websocket)
         await manager.broadcast(

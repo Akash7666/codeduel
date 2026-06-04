@@ -862,3 +862,6 @@ input:focus, select:focus {
 /* legacy .toggle class (in case any markup still uses it) */
 .toggle { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-dim); }
 .toggle a { cursor: pointer; text-decoration: underline; color: var(--accent); }
+
+.timer.timer-warning { color: var(--danger); animation: pulse-timer 1s ease-in-out infinite; }
+@keyframes pulse-timer { 50% { opacity: 0.55; } }

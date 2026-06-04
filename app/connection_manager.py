@@ -13,6 +13,13 @@ class ConnectionManager:
         # room_code -> list of (user_id, websocket) tuples
         self._rooms: Dict[str, List[tuple[int, WebSocket]]] = {}
         self._pending_forfeits: Dict[tuple, asyncio.Task] = {}
+        self._latest_code: Dict[tuple, str] = {}
+    
+    def set_code(self, room_code: str, user_id: int, code: str) -> None:
+        self._latest_code[(room_code, user_id)] = code
+
+    def get_code(self, room_code: str, user_id: int) -> str | None:
+        return self._latest_code.get((room_code, user_id))
 
     async def connect(self, room_code: str, user_id: int, websocket: WebSocket) -> None:
         """Accept the socket and register it under its room."""

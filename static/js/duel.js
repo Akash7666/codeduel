@@ -7,7 +7,6 @@ const roomCode = window.location.pathname.split("/").pop().toUpperCase();
 let me = null;        // populated from /auth/me
 let roomState = null; // populated from /rooms/{code} + ws updates
 let socket = null;
-let timerInterval = null;
 
 // ---- DOM refs ----
 const $ = (id) => document.getElementById(id);
@@ -101,6 +100,7 @@ function renderForStatus() {
     hideWaiting();
     loadProblemForLiveRoom();
     startTimer();
+    startCodeSync();
   } else if (roomState.status === "finished") {
     hideWaiting();
     setDotsFinished();
@@ -110,7 +110,6 @@ function renderForStatus() {
 
 
 async function loadProblemForLiveRoom() {
-  // Already have the problem (normal flow via duel_started) — just render it.
   if (roomState.problem) {
     renderProblemIfAvailable();
     setEditorContent(roomState.problem.starter_code);
@@ -118,10 +117,10 @@ async function loadProblemForLiveRoom() {
     document.getElementById("submit-btn").disabled = false;
     return;
   }
-  // Refresh case: fetch the problem for this room.
   try {
     const problem = await api(`/rooms/${roomCode}/problem`);
     roomState.problem = problem;
+    roomState.time_cap_sec = problem.time_cap_sec;
     renderProblemIfAvailable();
     setEditorContent(problem.starter_code);
     setEditorReadOnly(false);
@@ -186,17 +185,33 @@ function showFinishedOverlay(reason) {
 }
 
 // ---- Timer ----
+let timerInterval = null;
+
 function startTimer() {
-  if (timerInterval) return; // already running
-  const startedAt = roomState.started_at ? new Date(roomState.started_at) : new Date();
+  stopTimer();
+  const started = new Date(roomState.started_at).getTime();
+  const capMs = (roomState.time_cap_sec || 600) * 1000;
+  const deadline = started + capMs;
+
   function tick() {
-    const elapsed = Math.floor((Date.now() - startedAt.getTime()) / 1000);
-    const m = Math.floor(elapsed / 60);
-    const s = elapsed % 60;
-    $("timer").textContent = `${m}:${String(s).padStart(2, "0")}`;
+    const remaining = Math.max(0, deadline - Date.now());
+    const totalSec = Math.floor(remaining / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    const el = document.getElementById("timer");
+    if (el) el.textContent = `${m}:${String(s).padStart(2, "0")}`;
+
+    // Visual warning in the last 60 seconds
+    if (el && totalSec <= 60) el.classList.add("timer-warning");
+
+    if (remaining <= 0) {
+      stopTimer();
+      // Deadline reached — Stage 3 will handle auto-judge.
+      // For now, just stop at 0:00; server will resolve.
+    }
   }
   tick();
-  timerInterval = setInterval(tick, 1000);
+  timerInterval = setInterval(tick, 250);
 }
 
 function stopTimer() {
@@ -235,6 +250,7 @@ function handleMessage(msg) {
       setMeOnline(connected.has(me.id));
       const opp = getOpponent();
       setOpponentOnline(opp ? connected.has(opp.id) : false);
+      roomState.time_cap_sec = msg.room.time_cap_sec;
       break;
     }
 
@@ -260,6 +276,7 @@ function handleMessage(msg) {
    case "duel_started":
       roomState.status = "live";
       roomState.started_at = msg.started_at;
+      roomState.time_cap_sec = msg.time_cap_sec;
       roomState.problem = msg.problem;
       hideWaiting();
       renderProblemIfAvailable();
@@ -267,6 +284,7 @@ function handleMessage(msg) {
       setEditorReadOnly(false);
       document.getElementById("submit-btn").disabled = false;
       startTimer();
+      startCodeSync();
       break;
 
     case "opponent_submitted":
@@ -287,6 +305,7 @@ function handleMessage(msg) {
       roomState.status = "finished";
       roomState.winner_id = msg.winner_id;
       stopTimer();
+      stopCodeSync();
       setEditorReadOnly(true);
       setDotsFinished();
       document.getElementById("submit-btn").disabled = true;
@@ -418,5 +437,29 @@ document.querySelectorAll(".result-tab").forEach((tab) => {
     document.getElementById(tab.dataset.tab).classList.add("active");
   };
 });
+
+
+// Periodically sync the editor's current code to the server (every 10s if changed).
+let lastSyncedCode = null;
+let codeSyncInterval = null;
+
+function startCodeSync() {
+  stopCodeSync();
+  codeSyncInterval = setInterval(() => {
+    if (roomState.status !== "live") return;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    const code = getEditorContent();
+    if (code === lastSyncedCode) return;  // only send if changed
+    lastSyncedCode = code;
+    socket.send(JSON.stringify({ type: "code_sync", code }));
+  }, 10000);
+}
+
+function stopCodeSync() {
+  if (codeSyncInterval) {
+    clearInterval(codeSyncInterval);
+    codeSyncInterval = null;
+  }
+}
 
 init();
