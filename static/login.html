@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -16,10 +16,10 @@
     <h1>CodeDuel</h1>
     <p class="tagline">LeetCode is the gym. CodeDuel is the game.</p>
 
-    <div class="error" id="error"></div>
+    <div class="error" id="error"></div> -->
 
     <!-- Login form -->
-    <div id="login-form">
+    <!-- <div id="login-form">
       <label>Email</label>
       <input type="email" id="login-email" placeholder="you@example.com">
       <label>Password</label>
@@ -28,8 +28,8 @@
       <p class="toggle">No account? <a id="show-signup">Sign up</a></p>
     </div>
 
-    <!-- Signup form (hidden by default) -->
-    <div id="signup-form" style="display:none;">
+    <-- Signup form (hidden by default) -->
+    <!-- <div id="signup-form" style="display:none;">
       <label>Username</label>
       <input type="text" id="signup-username" placeholder="yourname">
       <label>Email</label>
@@ -39,6 +39,61 @@
       <button id="signup-btn">Create account</button>
       <p class="toggle">Have an account? <a id="show-login">Log in</a></p>
     </div>
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/login.js"></script>
+</body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="/static/js/theme.js"></script>
+  <title>CodeDuel — Login</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="auth-body">
+  <button id="theme-toggle" class="theme-toggle" title="Toggle theme">◐</button>
+
+  <div class="auth-wrap">
+    <div class="card auth-card">
+      <div class="brand"><span class="logo-mark">&lt;/&gt;</span> CODE<span class="accent">DUEL</span></div>
+      <p class="tagline">LeetCode is the gym. CodeDuel is the game.</p>
+
+      <div class="error" id="error"></div>
+
+      <!-- Login form -->
+      <div id="login-form">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••">
+        <button id="login-btn" class="btn-primary">Log in →</button>
+        <p class="switch-link">No account? <a id="show-signup">Sign up</a></p>
+      </div>
+
+      <!-- Signup form (hidden by default) -->
+      <div id="signup-form" style="display:none;">
+        <label>Username</label>
+        <input type="text" id="signup-username" placeholder="yourname">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="••••••••">
+        <button id="signup-btn" class="btn-primary">Create account →</button>
+        <p class="switch-link">Have an account? <a id="show-login">Log in</a></p>
+      </div>
+    </div>
+
+    <div class="footer-tag"><span class="logo-mark">&lt;/&gt;</span> Code. Duel. Win.</div>
   </div>
 
   <script src="/static/js/api.js"></script>

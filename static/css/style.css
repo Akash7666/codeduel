@@ -400,9 +400,6 @@ select:focus { outline: none; border-color: #6366f1; }
 } */ 
 
 
-
-
-
 /* ============================================================
    CodeDuel — sharp / techy / monospace theme
    Light-first with dark toggle. All colors are CSS variables;
@@ -841,3 +838,27 @@ input:focus, select:focus {
 .btn-primary:hover { filter: brightness(1.05); }
 
 .footer-tag { text-align: center; color: var(--text-faint); font-size: 0.82rem; margin-top: 1.6rem; }
+
+/* ============================================================
+   AUTH (login/signup) — match lobby atmosphere
+   ============================================================ */
+.auth-body {
+  display: flex; align-items: center; justify-content: center; min-height: 100vh;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(700px 350px at 50% 0%, var(--accent-soft), transparent 65%),
+    linear-gradient(var(--bg-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+  background-size: auto, 22px 22px, 22px 22px;
+}
+.auth-wrap { width: 100%; max-width: 400px; padding: 1rem; }
+.auth-card {
+  padding: 2.2rem;
+  border-top: 3px solid var(--accent);
+  box-shadow: 0 0 50px var(--accent-soft), var(--shadow);
+}
+.auth-card .brand { font-size: 1.5rem; margin-bottom: 0.2rem; }
+.auth-card .accent { color: var(--accent); }
+/* legacy .toggle class (in case any markup still uses it) */
+.toggle { text-align: center; margin-top: 1rem; font-size: 0.85rem; color: var(--text-dim); }
+.toggle a { cursor: pointer; text-decoration: underline; color: var(--accent); }
