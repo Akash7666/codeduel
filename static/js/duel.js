@@ -169,18 +169,27 @@ function renderProblemIfAvailable() {
 
 
 function showFinishedOverlay(reason) {
-  if (!roomState.winner_id) return;
-  const iWon = roomState.winner_id === me.id;
-  if (iWon) {
-    $("overlay-win").classList.remove("hidden");
-    if (reason === "forfeit") {
-      $("win-reason").textContent = "Opponent disconnected.";
+
+  // Hide the evaluating overlay if it's showing
+  document.getElementById("overlay-evaluating").classList.add("hidden"); 
+
+  const winId = roomState.winner_id;
+
+  if (winId == null) {
+    // Tie — no winner
+    const tie = document.getElementById("overlay-tie");
+    if (reason === "time_up_tie") {
+      document.getElementById("tie-reason").textContent =
+        "Time's up — neither solution passed in time.";
     }
+    tie.classList.remove("hidden");
+    return;
+  }
+
+  if (winId === me.id) {
+    document.getElementById("overlay-win").classList.remove("hidden");
   } else {
-    $("overlay-lose").classList.remove("hidden");
-    if (reason === "forfeit") {
-      $("lose-reason").textContent = "You disconnected.";
-    }
+    document.getElementById("overlay-lose").classList.remove("hidden");
   }
 }
 
@@ -204,10 +213,14 @@ function startTimer() {
     // Visual warning in the last 60 seconds
     if (el && totalSec <= 60) el.classList.add("timer-warning");
 
-    if (remaining <= 0) {
+   if (remaining <= 0) {
       stopTimer();
-      // Deadline reached — Stage 3 will handle auto-judge.
-      // For now, just stop at 0:00; server will resolve.
+      // Send the latest code one last time so the server judges the freshest version.
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "code_sync", code: getEditorContent() }));
+      }
+      // Show "evaluating" immediately while the server judges.
+      document.getElementById("overlay-evaluating").classList.remove("hidden");
     }
   }
   tick();

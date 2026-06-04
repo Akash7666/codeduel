@@ -201,6 +201,7 @@ async def submit_code(
     # First correct solution wins — guard on status to handle ties
     if verdict["all_passed"] and room.status == "live":
         room.status = "finished"
+        manager.cancel_forfeit(room.code, -1)
         room.winner_id = current_user.id
         room.finished_at = datetime.now(timezone.utc)
         _record_result(db, room)

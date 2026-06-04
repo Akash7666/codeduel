@@ -2,6 +2,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from sqlalchemy.orm import Session
 from app.rooms import time_cap_for
+from app.judging import judge_submission
 
 from app.database import get_db
 from app.models import Room, User
@@ -14,6 +15,66 @@ from app.database import SessionLocal
 router = APIRouter()
 
 
+
+
+
+async def _deadline_resolve(room_code: str, cap_seconds: int) -> None:
+    """After the time cap, judge both players' synced code and resolve the duel."""
+    try:
+        await asyncio.sleep(cap_seconds)
+    except asyncio.CancelledError:
+        return  # duel ended early (someone won) — deadline cancelled
+
+    db = SessionLocal()
+    try:
+        room = db.query(Room).filter(Room.code == room_code).first()
+        if not room or room.status != "live":
+            return  # already resolved
+
+        problem = room.problem
+        results = {}  # user_id -> bool (passed all)
+        for uid in (room.player_a_id, room.player_b_id):
+            if uid is None:
+                continue
+            code = manager.get_code(room_code, uid)
+            if not code:
+                results[uid] = False
+                continue
+            verdict = judge_submission(code, problem)
+            results[uid] = verdict["all_passed"]
+
+        a_ok = results.get(room.player_a_id, False)
+        b_ok = results.get(room.player_b_id, False)
+
+        if a_ok and not b_ok:
+            winner_id = room.player_a_id
+        elif b_ok and not a_ok:
+            winner_id = room.player_b_id
+        elif a_ok and b_ok:
+            # Both correct at deadline — tie-break by who submitted correctly first.
+            # We don't track per-player submit times here, so call it a tie.
+            winner_id = None
+        else:
+            winner_id = None  # neither solved → tie
+
+        room.status = "finished"
+        room.winner_id = winner_id
+        room.finished_at = datetime.now(timezone.utc)
+        if winner_id is not None:
+            _record_result_ws(db, room)  # records win/loss
+        db.commit()
+
+        await manager.broadcast_all(
+            room_code,
+            {
+                "type": "duel_ended",
+                "winner_id": winner_id,
+                "reason": "time_up_tie" if winner_id is None else "time_up_win",
+                "finished_at": room.finished_at.isoformat(),
+            },
+        )
+    finally:
+        db.close()
 
 
 async def _delayed_forfeit(room_code: str, user_id: int, delay: int) -> None:
@@ -195,6 +256,12 @@ async def room_socket(
             db.commit()
             db.refresh(room)
             await manager.broadcast_all(room.code, _duel_started_message(room))
+            # Schedule the deadline auto-resolution.
+            cap = time_cap_for(room.problem.difficulty)
+            manager.schedule_forfeit(  # reuse the task tracker, different coro
+                room.code, -1,  # user_id -1 = the "deadline" pseudo-task for this room
+                _deadline_resolve(room.code, cap)
+            )
 
         # Keep the connection open. We don't expect client->server messages yet,
         # but receive_text() will sit here and raise WebSocketDisconnect on drop.
