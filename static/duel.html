@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="/static/js/theme.js"></script>
   <title>CodeDuel — Duel</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -10,6 +14,7 @@
   <div class="duel-shell">
     <!-- Header -->
     <div class="duel-header">
+      <button id="theme-toggle" class="theme-toggle" title="Toggle theme">◐</button>
       <div class="room-code">Room: <span id="room-code">—</span> · <span id="room-diff">—</span></div>
       <div class="timer" id="timer">0:00</div>
       <div class="players-panel">

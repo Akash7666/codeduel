@@ -1,12 +1,17 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="/static/js/theme.js"></script>
   <title>CodeDuel — Lobby</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
+  <button id="theme-toggle" class="theme-toggle" title="Toggle theme">◐</button>
   <div class="card wide">
     <div class="header-row">
       <div>
@@ -45,6 +50,113 @@
         <button id="join-btn">Join</button>
       </div>
     </div>
+  </div>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/lobby.js"></script>
+</body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="/static/js/theme.js"></script>
+  <title>CodeDuel — Lobby</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="lobby-body">
+  <div class="app-frame">
+
+    <!-- Top nav -->
+    <nav class="topnav">
+      <div class="logo"><span class="logo-mark">&lt;/&gt;</span> CODE DUEL</div>
+      <div class="nav-links">
+        <a class="nav-link active">Lobby</a>
+        <a class="nav-link disabled" title="Coming soon">Leaderboard</a>
+        <a class="nav-link disabled" title="Coming soon">Problems</a>
+        <a class="nav-link disabled" title="Coming soon">Profile</a>
+      </div>
+      <div class="nav-right">
+        <button id="theme-toggle" class="theme-toggle" title="Toggle theme">◐</button>
+        <button id="logout-btn" class="logout">Log out</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-left">
+        <h1 class="hero-title"><span id="greeting">Hello</span> <span class="wave">👋</span></h1>
+        <p class="hero-sub">Ready to code and battle?</p>
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-icon win">⚔</div>
+            <div><div class="stat-num" id="stat-wins">0</div><div class="stat-label">Wins</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon loss">✕</div>
+            <div><div class="stat-num" id="stat-losses">0</div><div class="stat-label">Losses</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon rank">★</div>
+            <div><div class="stat-num">—</div><div class="stat-label">Rank</div></div>
+          </div>
+        </div>
+        <!-- hidden element kept so lobby.js stats write doesn't error -->
+        <span id="stats" class="hidden"></span>
+      </div>
+
+      <!-- Animated terminal graphic (replaces 3D illustration) -->
+      <div class="hero-right">
+        <div class="terminal">
+          <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+          <pre class="term-body"><span class="l"><span class="c-key">def</span> <span class="c-fn">duel</span>(a, b):</span>
+<span class="l">    <span class="c-key">while</span> coding:</span>
+<span class="l">        a.solve()  <span class="c-com"># tick…</span></span>
+<span class="l">        b.solve()  <span class="c-com"># tick…</span></span>
+<span class="l">        <span class="c-key">if</span> a.passed: <span class="c-key">return</span> <span class="c-str">"WIN"</span></span>
+<span class="l blink-line">    <span class="c-com"># ready_</span></span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action panels -->
+    <section class="action-grid">
+      <div class="action-panel">
+        <h2>Start New Duel</h2>
+        <p class="panel-sub">Choose difficulty and start a new battle</p>
+        <select id="difficulty-select">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <button id="create-btn" class="btn-primary">⚡ Create Match</button>
+        <div id="created" style="display:none;">
+          <div id="share-link" class="share-box">—</div>
+          <div class="row">
+            <button id="copy-btn">Copy link</button>
+            <button id="go-to-duel">Go to duel →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-panel">
+        <h2>Join Existing Duel</h2>
+        <p class="panel-sub">Enter the code and join the battle</p>
+        <input id="join-code" placeholder="ABC123" maxlength="6" />
+        <button id="join-btn" class="btn-primary">Join Match →</button>
+      </div>
+    </section>
+
+    <div class="error" id="error"></div>
+    <div class="footer-tag"><span class="logo-mark">&lt;/&gt;</span> Code. Duel. Win.</div>
+
   </div>
 
   <script src="/static/js/api.js"></script>

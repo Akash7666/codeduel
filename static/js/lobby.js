@@ -24,8 +24,9 @@ document.getElementById("create-btn").onclick = async () => {
 async function loadMe() {
   try {
     const me = await api("/auth/me");
-    document.getElementById("greeting").textContent = `Hi, ${me.username}`;
-    document.getElementById("stats").textContent = `Wins: ${me.wins} · Losses: ${me.losses}`;
+    document.getElementById("greeting").textContent = `Hello ${me.username}`;
+    document.getElementById("stat-wins").textContent = me.wins;
+    document.getElementById("stat-losses").textContent = me.losses;
   } catch (e) {
     // Token expired or bad — bounce back to login
     clearToken();
